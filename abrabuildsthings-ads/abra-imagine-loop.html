@@ -1,0 +1,210 @@
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --text: #f5f5f6;
+    --accent: #34c759;
+    --accent-dim: #1f7a35;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(14px, 3vw, 22px);
+    text-align: center;
+    max-width: min(94vw, 760px);
+    width: 100%;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+  }
+
+  .stage.fading {
+    opacity: 0;
+  }
+
+  .url-line {
+    font-weight: 800;
+    font-size: clamp(1.8rem, 6.5vw, 3.6rem);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: baseline;
+  }
+
+  .caret {
+    display: inline-block;
+    width: 0.06em;
+    margin-left: 0.05em;
+    background: var(--accent);
+    align-self: stretch;
+    animation: blink 1s step-end infinite;
+  }
+
+  .caret.hidden {
+    display: none;
+  }
+
+  @keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  .tagline-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .tagline {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: clamp(1.05rem, 4vw, 1.9rem);
+    white-space: nowrap;
+  }
+
+  #line-imagine {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+    transition: opacity 0.35s ease, transform 0.5s ease;
+  }
+
+  #line-imagine.shown {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  /* Enters by growing max-width from 0 -- since the row stays centered,
+     this naturally pushes #line-imagine to the left as it grows, no
+     manual offset math needed. max-width targets a value comfortably
+     larger than the phrase will ever render at, so it reads as a clean
+     slide-reveal rather than a visible clip. */
+  #line-build {
+    overflow: hidden;
+    max-width: 0;
+    margin-left: 0;
+    opacity: 0;
+    transform: translateX(18px);
+    transition:
+      max-width 0.6s cubic-bezier(0.22, 0.8, 0.2, 1),
+      margin-left 0.6s cubic-bezier(0.22, 0.8, 0.2, 1),
+      opacity 0.4s ease,
+      transform 0.6s cubic-bezier(0.22, 0.8, 0.2, 1);
+  }
+
+  #line-build.shown {
+    max-width: 420px;
+    margin-left: 14px;
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  @media (max-width: 480px) {
+    .url-line {
+      white-space: normal;
+      word-break: break-word;
+    }
+    .tagline-row {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .caret { animation: none; opacity: 0; }
+    .stage, .tagline, #line-build { transition: none; }
+  }
+</style>
+
+<div class="stage" id="stage">
+  <div class="url-line"><span id="url-text"></span><span class="caret" id="caret"></span></div>
+  <div class="tagline-row">
+    <span class="tagline" id="line-imagine">If you can imagine it.</span><span class="tagline" id="line-build">I can build it.</span>
+  </div>
+</div>
+
+<script>
+(function () {
+  const FULL_TEXT = "abrabuildsthings.com";
+  const TYPE_MS = 70;
+  const AFTER_TYPE_PAUSE_MS = 500;
+  const LINE_GAP_MS = 850;
+  const HOLD_MS = 2000;
+  const FADE_MS = 500;
+  const RESTART_GAP_MS = 500;
+
+  const urlText = document.getElementById("url-text");
+  const caret = document.getElementById("caret");
+  const lineImagine = document.getElementById("line-imagine");
+  const lineBuild = document.getElementById("line-build");
+  const stage = document.getElementById("stage");
+
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function reset() {
+    urlText.textContent = "";
+    lineImagine.classList.remove("shown");
+    lineBuild.classList.remove("shown");
+    stage.classList.remove("fading");
+  }
+
+  function runOnce() {
+    reset();
+    let i = 0;
+
+    function typeNext() {
+      if (i < FULL_TEXT.length) {
+        urlText.textContent += FULL_TEXT[i];
+        i++;
+        setTimeout(typeNext, TYPE_MS);
+      } else {
+        setTimeout(() => {
+          lineImagine.classList.add("shown");
+          setTimeout(() => {
+            lineBuild.classList.add("shown");
+            setTimeout(() => {
+              stage.classList.add("fading");
+              setTimeout(() => {
+                setTimeout(runOnce, RESTART_GAP_MS);
+              }, FADE_MS);
+            }, HOLD_MS);
+          }, LINE_GAP_MS);
+        }, AFTER_TYPE_PAUSE_MS);
+      }
+    }
+
+    typeNext();
+  }
+
+  if (reduced) {
+    caret.classList.add("hidden");
+    urlText.textContent = FULL_TEXT;
+    lineImagine.classList.add("shown");
+    lineBuild.classList.add("shown");
+  } else {
+    runOnce();
+  }
+})();
+</script>
