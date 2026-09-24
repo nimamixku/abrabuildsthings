@@ -268,6 +268,20 @@ main {
   font-size: 0.85rem;
 }
 
+.message-item-delete {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0;
+  margin-left: auto;
+}
+
+.message-item-delete:hover {
+  color: #ff6b6b;
+}
+
 .message-item-date {
   color: var(--text-dim);
   font-size: 0.78rem;

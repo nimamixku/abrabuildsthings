@@ -18,3 +18,23 @@ export async function GET(req) {
 
   return NextResponse.json({ messages: result.rows });
 }
+
+export async function DELETE(req) {
+  if (!isOwnerRequest(req)) {
+    return NextResponse.json(
+      { error: "Sign in to delete messages." },
+      { status: 403 }
+    );
+  }
+
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ error: "Missing message id." }, { status: 400 });
+  }
+
+  await query(`delete from messages where id = $1`, [id]);
+
+  return NextResponse.json({ ok: true });
+}

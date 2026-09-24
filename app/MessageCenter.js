@@ -58,6 +58,17 @@ export default function MessageCenter() {
     setExpanded(!expanded);
   }
 
+  async function handleDelete(id) {
+    const prev = messages;
+    setMessages((cur) => cur.filter((m) => m.id !== id));
+    const res = await fetch(`/api/messages?id=${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      // deletion failed server-side -- restore the message instead of
+      // silently losing it from view
+      setMessages(prev);
+    }
+  }
+
   if (!checked) return null;
 
   return (
@@ -106,6 +117,14 @@ export default function MessageCenter() {
                     <span className="message-item-date">
                       {new Date(m.created_at).toLocaleString()}
                     </span>
+                    <button
+                      type="button"
+                      className="message-item-delete"
+                      onClick={() => handleDelete(m.id)}
+                      title="Delete message"
+                    >
+                      Delete
+                    </button>
                   </div>
                   <p className="message-item-body">{m.message}</p>
                 </div>
